@@ -1,0 +1,196 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
+
+  --color-background: #090b0e;
+  --color-foreground: #eceff3;
+  --color-card: #12151a;
+  --color-card-foreground: #eceff3;
+  --color-popover: #161a21;
+  --color-popover-foreground: #eceff3;
+  --color-primary: #c5cbd4;
+  --color-primary-foreground: #090b0e;
+  --color-secondary: #191d24;
+  --color-secondary-foreground: #eceff3;
+  --color-muted: #191d24;
+  --color-muted-foreground: #8b939e;
+  --color-accent: #1e242e;
+  --color-accent-foreground: #eceff3;
+  --color-destructive: #b4554a;
+  --color-border: rgb(236 239 243 / 0.1);
+  --color-input: rgb(236 239 243 / 0.12);
+  --color-ring: #c5cbd4;
+  --color-ocean: #0c1016;
+  --color-land-empty: #1a1f27;
+  --color-graticule: rgb(236 239 243 / 0.055);
+  --color-sphere: rgb(236 239 243 / 0.16);
+  --color-ramp: #3b8880;
+  --color-choro-0: #1b3940;
+  --color-choro-1: #275c63;
+  --color-choro-2: #3b8880;
+  --color-choro-3: #7ebbae;
+  --color-choro-4: #d5f0e8;
+
+  --tracking-caps: 0.16em;
+  --leading-display: 1.15;
+
+  --text-2xs: 0.6875rem;
+  --text-micro: 0.625rem;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius: 12px;
+
+  --shadow-border: 0 0 0 1px rgb(255 255 255 / 0.08);
+  --shadow-border-hover: 0 0 0 1px rgb(255 255 255 / 0.13);
+  --shadow-overlay:
+    0 0 0 1px rgb(255 255 255 / 0.08),
+    0 18px 40px -24px rgb(0 0 0 / 0.7);
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --motion-stagger: 40ms;
+  --motion-micro: 80ms;
+  --motion-quick: 150ms;
+  --motion-fast: 250ms;
+  --motion-medium: 350ms;
+  --motion-slow: 400ms;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html,
+  body,
+  #app {
+    height: 100%;
+    background: var(--color-background);
+    color: var(--color-foreground);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+.atlas-path {
+  cursor: pointer;
+  stroke: var(--color-background);
+  stroke-width: 0.7px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  outline: none;
+  transition-property: fill, stroke, stroke-width, filter;
+  transition-duration: var(--motion-slow);
+  transition-timing-function: var(--ease-smooth-out);
+}
+
+.atlas-path[data-hover="true"] {
+  stroke: var(--color-foreground);
+  stroke-width: 1.15px;
+  filter: brightness(1.12);
+}
+
+.atlas-path[data-selected="true"] {
+  stroke: var(--color-foreground);
+  stroke-width: 1.7px;
+  filter: brightness(1.18);
+}
+
+.legend-ramp {
+  background: linear-gradient(
+    to top,
+    var(--color-choro-0),
+    var(--color-choro-1),
+    var(--color-choro-2),
+    var(--color-choro-3),
+    var(--color-choro-4)
+  );
+}
+
+[data-mode="kids"] {
+  --color-background: #141a42;
+  --color-foreground: #fff8e7;
+  --color-card: #1e2760;
+  --color-card-foreground: #fff8e7;
+  --color-popover: #24306e;
+  --color-popover-foreground: #fff8e7;
+  --color-primary: #fde047;
+  --color-primary-foreground: #1a1440;
+  --color-secondary: #2a3480;
+  --color-secondary-foreground: #fff8e7;
+  --color-muted: #2a3480;
+  --color-muted-foreground: #c4c8ef;
+  --color-accent: #3540a0;
+  --color-accent-foreground: #fff8e7;
+  --color-border: rgb(255 248 231 / 0.16);
+  --color-input: rgb(255 248 231 / 0.18);
+  --color-ring: #fde047;
+  --color-ocean: #1a4aa8;
+  --color-land-empty: #24306a;
+  --color-graticule: rgb(255 248 231 / 0.14);
+  --color-sphere: rgb(255 248 231 / 0.32);
+  --color-ramp: #84cc16;
+  --color-choro-0: #312e81;
+  --color-choro-1: #2563eb;
+  --color-choro-2: #06b6d4;
+  --color-choro-3: #84cc16;
+  --color-choro-4: #fde047;
+}
+
+[data-mode="kids"] .atlas-path {
+  stroke: rgb(20 26 66 / 0.55);
+  stroke-width: 0.85px;
+}
+
+[data-mode="kids"] .atlas-path[data-hover="true"],
+[data-mode="kids"] .atlas-path[data-selected="true"] {
+  stroke: var(--color-foreground);
+  filter: brightness(1.08);
+}
+
+.atlas-path[data-pulse="yes"] {
+  fill: var(--color-primary) !important;
+  stroke: var(--color-foreground);
+  stroke-width: 1.8px;
+}
+
+.atlas-path[data-pulse="no"] {
+  fill: var(--color-destructive) !important;
+  stroke: var(--color-foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-path {
+    transition: none;
+  }
+}
