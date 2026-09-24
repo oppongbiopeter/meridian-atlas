@@ -1,4 +1,5 @@
 import {
+  Component,
   forwardRef,
   lazy,
   Suspense,
@@ -8,6 +9,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 import {
   geoArea,
@@ -28,6 +30,34 @@ import type { GlobeHandle } from "@/components/atlas/globe-3d";
 const Globe3D = lazy(() =>
   import("@/components/atlas/globe-3d").then((mod) => ({ default: mod.Globe3D })),
 );
+
+function supportsWebGL(): boolean {
+  if (typeof document === "undefined") return false;
+  try {
+    const canvas = document.createElement("canvas");
+    const gl =
+      canvas.getContext("webgl2", { failIfMajorPerformanceCaveat: false }) ||
+      canvas.getContext("webgl", { failIfMajorPerformanceCaveat: false });
+    if (!gl || typeof gl !== "object" || !("getParameter" in gl)) return false;
+    gl.getExtension("WEBGL_lose_context")?.loseContext();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+class GlobeGuard extends Component<{ onFail: () => void; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch() {
+    this.props.onFail();
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
 export type MapHandle = {
   reset: () => void;
@@ -92,6 +122,10 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [rotation, setRotation] = useState<[number, number]>([-20, -18]);
   const [mounted, setMounted] = useState(false);
+  const [globeFailed, setGlobeFailed] = useState(false);
+  const webglRef = useRef<boolean | null>(null);
+  if (mounted && webglRef.current === null) webglRef.current = supportsWebGL();
+  const show3d = view === "globe" && mounted && !globeFailed && webglRef.current === true;
 
   useEffect(() => {
     setMounted(true);
@@ -193,19 +227,19 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
     ref,
     () => ({
       reset: () => {
-        if (view === "globe") globeHandle.current?.reset();
+        if (show3d) globeHandle.current?.reset();
         else reset();
       },
       zoomBy: (factor: number) => {
-        if (view === "globe") globeHandle.current?.zoomBy(factor);
+        if (show3d) globeHandle.current?.zoomBy(factor);
         else zoomBy(factor);
       },
       focusCountry: (id: string) => {
-        if (view === "globe") globeHandle.current?.focusCountry(id);
+        if (show3d) globeHandle.current?.focusCountry(id);
         else focusCountry(id);
       },
     }),
-    [reset, zoomBy, focusCountry, view],
+    [reset, zoomBy, focusCountry, show3d],
   );
 
   useEffect(() => {
@@ -252,7 +286,7 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
 
   const prevSelected = useRef<string | null>(null);
   useEffect(() => {
-    if (view === "globe") return;
+    if (show3d) return;
     if (!autoFocus) {
       prevSelected.current = selectedId;
       return;
@@ -261,7 +295,7 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
     prevSelected.current = selectedId;
     if (selectedId) focusCountry(selectedId);
     else reset();
-  }, [selectedId, focusCountry, reset, autoFocus, view]);
+  }, [selectedId, focusCountry, reset, autoFocus, show3d]);
 
   const onPointerDown = (event: React.PointerEvent<SVGSVGElement>) => {
     if (view !== "globe") return;
@@ -292,23 +326,27 @@ export const WorldMap = forwardRef<MapHandle, WorldMapProps>(function WorldMap(
     }, 0);
   };
 
+  const showFlat = view === "map" || !show3d;
+
   return (
     <div ref={wrapRef} className="absolute inset-0 bg-ocean">
-      {view === "globe" && mounted ? (
-        <Suspense fallback={null}>
-          <Globe3D
-            mode={mode}
-            fillOf={fillOf}
-            selectedId={selectedId}
-            pulse={pulse}
-            autoFocus={autoFocus}
-            onSelect={onSelect}
-            onHover={onHover}
-            globeRef={globeHandle}
-          />
-        </Suspense>
+      {show3d ? (
+        <GlobeGuard onFail={() => setGlobeFailed(true)}>
+          <Suspense fallback={null}>
+            <Globe3D
+              mode={mode}
+              fillOf={fillOf}
+              selectedId={selectedId}
+              pulse={pulse}
+              autoFocus={autoFocus}
+              onSelect={onSelect}
+              onHover={onHover}
+              globeRef={globeHandle}
+            />
+          </Suspense>
+        </GlobeGuard>
       ) : null}
-      {view === "map" && layout ? (
+      {showFlat && layout ? (
         <svg
           ref={svgRef}
           role="img"

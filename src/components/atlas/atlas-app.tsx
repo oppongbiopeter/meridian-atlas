@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Gamepad2, Library, Sparkles, X } from "lucide-react";
+import { BookOpen, Gamepad2, Library, Shapes, Sparkles, X } from "lucide-react";
 import { WorldMap, type MapHandle } from "@/components/atlas/world-map";
 import { CountryPanel } from "@/components/atlas/country-panel";
 import { DailyTipCard } from "@/components/atlas/daily-tip";
@@ -10,6 +10,7 @@ import { MapControls } from "@/components/atlas/map-controls";
 import { MapTooltip } from "@/components/atlas/map-tooltip";
 import { MetricSwitcher } from "@/components/atlas/metric-switcher";
 import { MetricRail } from "@/components/atlas/metric-rail";
+import { KidsStudio } from "@/components/atlas/kids-studio";
 import { LibraryPanel } from "@/components/atlas/library-panel";
 import { Button } from "@/components/ui/button";
 import {
@@ -91,6 +92,16 @@ export function AtlasApp() {
   const [recentPlaceIds, setRecentPlaceIds] = useState<string[]>([]);
   const [plus, setPlus] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [story, setStory] = useState(false);
+  const [studio, setStudio] = useState(false);
+  const [seek, setSeek] = useState<{
+    countryId: string;
+    name: string;
+    prompt: string;
+    triesLeft: number;
+    note: string;
+  } | null>(null);
+  const [seekReport, setSeekReport] = useState<{ id: string; ok: boolean; nonce: number } | null>(null);
 
   const features = useMemo(() => loadCountryFeatures(), []);
   const mappedCountries = useMemo(() => {
@@ -154,6 +165,7 @@ export function AtlasApp() {
   const question = quizPlay ? quiz.questions[quiz.index] : undefined;
 
   const fillOf = (id: string) => {
+    if (story) return id === selectedId ? stops[4] : stops[1];
     if (quiz.phase !== "off") return EMPTY_FILL[mode];
     if (locked) return EMPTY_FILL[mode];
     const country = atlas.get(id);
@@ -202,12 +214,56 @@ export function AtlasApp() {
   }, [mappedCountries, query]);
 
   const selectCountry = (id: string | null) => {
+    if (seek) {
+      guessSeek(id);
+      return;
+    }
     setSelectedId(id);
     if (id) {
       setMobileOpen(true);
       rememberPlace(id);
       setRecentPlaceIds(readRecentPlaces());
     }
+  };
+
+  const guessSeek = (id: string | null) => {
+    if (!id || !seek) return;
+    if (id === seek.countryId) {
+      speakSentence(`Yes. ${seek.name}.`);
+      setPulse({ id, kind: "yes" });
+      const countryId = seek.countryId;
+      window.setTimeout(() => {
+        setPulse(null);
+        setSeek(null);
+        setSeekReport((current) => ({ id: countryId, ok: true, nonce: (current?.nonce ?? 0) + 1 }));
+      }, 900);
+      return;
+    }
+    const left = seek.triesLeft - 1;
+    if (left <= 0) {
+      speakSentence(`It was ${seek.name}.`);
+      setPulse({ id: seek.countryId, kind: "yes" });
+      const countryId = seek.countryId;
+      window.setTimeout(() => {
+        setPulse(null);
+        setSeek(null);
+        setSeekReport((current) => ({ id: countryId, ok: false, nonce: (current?.nonce ?? 0) + 1 }));
+      }, 1200);
+      return;
+    }
+    speakSentence("Not that one.");
+    setPulse({ id, kind: "no" });
+    setSeek({ ...seek, triesLeft: left, note: "Not that one." });
+  };
+
+  const beginSeek = (round: { countryId: string; name: string; prompt: string }) => {
+    setSelectedId(null);
+    setMobileOpen(false);
+    setHover(null);
+    setView("globe");
+    setPulse(null);
+    setSeek({ ...round, triesLeft: 3, note: "Tap the country." });
+    speakSentence(round.prompt);
   };
 
   const startQuiz = (difficulty: QuizDifficulty) => {
@@ -296,6 +352,7 @@ export function AtlasApp() {
 
   const pickMetric = (id: MetricId) => {
     if (kids && !isKidsMetric(id)) return;
+    setStory(false);
     setMetricId(id);
   };
 
@@ -305,7 +362,8 @@ export function AtlasApp() {
   };
 
   const quizOn = quiz.phase !== "off";
-  const sheetOpen = !quizOn && (Boolean(selectedId) || mobileOpen);
+  const playing = studio && kids;
+  const sheetOpen = !quizOn && !playing && (Boolean(selectedId) || mobileOpen);
   const tip = tipForToday(kids);
   const showTooltip = hoveredCountry && hover && (!quizPlay || Boolean(level?.showNames));
 
@@ -338,6 +396,31 @@ export function AtlasApp() {
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <Button
+            type="button"
+            variant={story ? "default" : "secondary"}
+            size="sm"
+            aria-pressed={story}
+            onClick={() => {
+              setStory((on) => !on);
+              setStudio(false);
+            }}
+          >
+            <BookOpen className="size-3.5" />
+            <span className="hidden sm:inline">Facts</span>
+          </Button>
+          {kids ? (
+            <Button
+              type="button"
+              variant={studio ? "default" : "secondary"}
+              size="sm"
+              aria-pressed={studio}
+              onClick={() => setStudio((on) => !on)}
+            >
+              <Shapes className="size-3.5" />
+              <span className="hidden sm:inline">Play</span>
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant={libraryOpen ? "default" : "secondary"}
@@ -446,7 +529,7 @@ export function AtlasApp() {
               onClose={() => setQuiz({ phase: "off" })}
             />
           ) : null}
-          {!quizOn && !locked ? (
+          {!quizOn && !locked && !story ? (
             <Legend metric={metric} mode={mode} ticks={ticks} year={source.latestYear} />
           ) : null}
           {tipOpen && !quizOn ? (
@@ -468,10 +551,39 @@ export function AtlasApp() {
             hideList={quizOn}
           />
           {libraryOpen ? <LibraryPanel onClose={() => setLibraryOpen(false)} /> : null}
+          {seek && kids ? (
+            <div className="absolute top-3 right-3 left-3 z-20 rounded-2xl bg-card p-3 shadow-[var(--shadow-overlay)] sm:left-auto sm:max-w-sm">
+              <p className="text-2xs font-medium tracking-caps text-muted-foreground uppercase">Show and tell</p>
+              <p className="font-display mt-1 text-lg leading-snug font-medium tracking-tight">{seek.prompt}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {seek.note} Tries left: {seek.triesLeft}.
+              </p>
+              <Button type="button" size="sm" variant="secondary" className="mt-2" onClick={() => setSeek(null)}>
+                Back to the game
+              </Button>
+            </div>
+          ) : null}
+          {studio && kids ? (
+            <KidsStudio
+              countries={mappedCountries.map((c) => ({ id: c.id, name: c.name, region: c.region }))}
+              plus={plus}
+              parked={Boolean(seek)}
+              seekReport={seekReport}
+              onClose={() => {
+                setStudio(false);
+                setSeek(null);
+              }}
+              onUnlock={() => {
+                writePlus(true);
+                setPlus(true);
+              }}
+              onSeek={beginSeek}
+            />
+          ) : null}
           </div>
         </section>
 
-        {quizOn ? null : (
+        {quizOn || playing ? null : (
           <aside className="hidden w-[340px] shrink-0 border-l border-border bg-card lg:flex lg:flex-col">
             <CountryPanel
               metric={metric}
@@ -490,6 +602,7 @@ export function AtlasApp() {
                 writePlus(true);
                 setPlus(true);
               }}
+              story={story}
             />
           </aside>
         )}
@@ -560,6 +673,7 @@ export function AtlasApp() {
                 writePlus(true);
                 setPlus(true);
               }}
+              story={story}
             />
           </div>
         </div>

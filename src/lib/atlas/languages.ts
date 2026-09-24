@@ -61,6 +61,16 @@ const LANG: Record<string, { locale: string; language: string }> = {
   kk: { locale: "kk-KZ", language: "Kazakh" },
   ca: { locale: "ca-ES", language: "Catalan" },
   is: { locale: "is-IS", language: "Icelandic" },
+  sq: { locale: "sq-AL", language: "Albanian" },
+  bs: { locale: "bs-BA", language: "Bosnian" },
+  mk: { locale: "mk-MK", language: "Macedonian" },
+  so: { locale: "so-SO", language: "Somali" },
+  dz: { locale: "dz-BT", language: "Dzongkha" },
+  kl: { locale: "kl-GL", language: "Greenlandic" },
+  ti: { locale: "ti-ER", language: "Tigrinya" },
+  ky: { locale: "ky-KG", language: "Kyrgyz" },
+  tg: { locale: "tg-TJ", language: "Tajik" },
+  tk: { locale: "tk-TM", language: "Turkmen" },
 };
 
 const ISO3_LANG: Record<string, string> = {
@@ -83,8 +93,8 @@ const ISO3_LANG: Record<string, string> = {
   RUS: "ru", RWA: "sw", SAU: "ar", SEN: "fr", SRB: "sr", SLE: "en", SGP: "zh", SVK: "sk",
   SVN: "sl", SLB: "en", SOM: "so", ZAF: "en", SSD: "en", ESP: "es", LKA: "si", SDN: "ar",
   SUR: "nl", SWE: "sv", CHE: "de", SYR: "ar", TWN: "zh", TJK: "tg", TZA: "sw", THA: "th",
-  TGO: "fr", TTO: "en", TUN: "ar", TUR: "tr", TKM: "tk", UGA: "sw", UKR: "uk", ARE: "ar",
-  GBR: "en", USA: "en", URY: "es", UZB: "uz", VEN: "es", VNM: "vi", ESH: "ar", YEM: "ar",
+  TGO: "fr", TLS: "pt", TTO: "en", TUN: "ar", TUR: "tr", TKM: "tk", UGA: "sw", UKR: "uk", ARE: "ar",
+  GBR: "en", USA: "en", URY: "es", UZB: "uz", VUT: "en", VEN: "es", VNM: "vi", ESH: "ar", YEM: "ar",
   ZMB: "en", ZWE: "en", PSE: "ar", XKX: "sq",
 };
 

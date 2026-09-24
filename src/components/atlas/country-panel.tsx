@@ -1,4 +1,5 @@
 import { ArrowUpRight, Globe2, Lock, X } from "lucide-react";
+import { CountryFacts } from "@/components/atlas/country-facts";
 import { KidsWordStage } from "@/components/atlas/kids-panel";
 import { PlusGate } from "@/components/atlas/plus-gate";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +35,7 @@ type CountryPanelProps = {
   onMetricChange: (id: MetricId) => void;
   plus?: boolean;
   onUnlock?: () => void;
+  story?: boolean;
 };
 
 function PercentileBar({ percentile }: { percentile: number }) {
@@ -133,6 +135,7 @@ export function CountryPanel({
   onMetricChange,
   plus = false,
   onUnlock,
+  story = false,
 }: CountryPanelProps) {
   const ranking = selected ? rankOf(stats, selected.id) : null;
   const max = stats.values[0]?.value ?? 0;
@@ -184,7 +187,7 @@ export function CountryPanel({
                       </span>
                     </span>
                     <span className="text-xs tabular-nums text-muted-foreground">
-                      {formatMetricValue(metric.id, country.values[metric.id])}
+                      {story ? "Fact" : formatMetricValue(metric.id, country.values[metric.id])}
                     </span>
                   </button>
                 </li>
@@ -195,7 +198,7 @@ export function CountryPanel({
       ) : selected ? (
         <ScrollArea className="min-h-0 flex-1">
           <div className="px-5 pb-6">
-            {kids ? (
+            {kids && !story ? (
               <KidsWordStage
                 metric={metric}
                 selected={selected}
@@ -226,6 +229,10 @@ export function CountryPanel({
               </Button>
             </div>
 
+            {story ? (
+              <CountryFacts country={selected} />
+            ) : (
+            <>
             <div className="mt-6">
               {locked ? (
                 <PlusGate metric={metric} onUnlock={() => onUnlock?.()} />
@@ -264,6 +271,8 @@ export function CountryPanel({
             ) : (
               <p className="mt-5 text-sm text-muted-foreground">No figure for this metric.</p>
             )}
+
+            <CountryFacts country={selected} quiet />
 
             <Separator className="my-6" />
 
@@ -315,6 +324,8 @@ export function CountryPanel({
             </div>
 
             <SourceNote source={source} />
+            </>
+            )}
           </div>
         </ScrollArea>
       ) : (
@@ -332,10 +343,12 @@ export function CountryPanel({
               <p className="text-xs font-medium tracking-caps uppercase">Overview</p>
             </div>
             <h2 className="font-display mt-2 text-2xl leading-tight font-medium tracking-tight text-foreground">
-              {copy.label}
+              {story ? "Country stories" : copy.label}
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              {copy.description}
+              {story
+                ? "No metric is selected. Tap any country to hear a fact, including a line in that country’s language."
+                : copy.description}
             </p>
             {locked ? (
               <div className="mt-5">

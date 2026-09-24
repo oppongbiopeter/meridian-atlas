@@ -147,6 +147,12 @@ export function Globe3D({
           ref={apiRef as never}
           width={size.width}
           height={size.height}
+          rendererConfig={{
+            antialias: false,
+            alpha: true,
+            failIfMajorPerformanceCaveat: false,
+            powerPreference: "low-power",
+          }}
           backgroundColor="rgba(0,0,0,0)"
           globeImageUrl={texture}
           atmosphereColor={mode === "kids" ? "#f0c14a" : "#3b8880"}
